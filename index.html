@@ -7,35 +7,31 @@
 </body>
 <script src="https://meomaymap.github.io/ALL_BARCODE/html5-qrcode.min.js"></script>
 <script>
-     var url = '{{ route('entry.building.card', [ 'tokenbuliding']) }}';
-        function docReady(fn) {
-            // see if DOM is already available
-            if (document.readyState === "complete"
-                || document.readyState === "interactive") {
-                // call on next available tick
-                setTimeout(fn, 1);
-            } else {
-                document.addEventListener("DOMContentLoaded", fn);
+     _requestCamera: function() {
+            var self = this;
+            // This method will trigger user permissions
+            Html5Qrcode.getCameras().then(devices => {
+                var backCamera = devices[devices.length -1 ];
+                self.cameraId = backCamera.id;
+                self._initCamera();
+            }).catch(err => {
+                alert(err);
+                //alert('Please allow camera permission to use barcode scanner');
+                self.popupSearch.modal('closeModal');
+            });
+        },
+        _initCamera: function() {
+            if (!this.html5QrCode) {
+                this.html5QrCode = new Html5Qrcode("quick-order-barcode-reader");
             }
-        }
-
-        docReady(function () {
-            var resultContainer = document.getElementById('qr-reader-results');
-            var lastResult, countResults = 0;
-            function onScanSuccess(decodedText, decodedResult) {
-                if (decodedText !== lastResult) {
-                    ++countResults;
-                    lastResult = decodedText;
-                    console.log(decodedText);
-                    window.location.href = url.replace('tokenbuliding', decodedText);
-                    html5QrcodeScanner.clear();
-                }
-            }
-
-            var html5QrcodeScanner = new Html5QrcodeScanner(
-                "qr-reader", { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1 });
-            html5QrcodeScanner.render(onScanSuccess);
-        });
+            const config = { fps: 24, qrbox: 250 };
+            $('#quick-order-barcode-search').trigger('processStart');
+            // If you want to prefer back camera
+            this.html5QrCode.start({ facingMode: "environment" }, config, this.qrCodeSuccessCallback.bind(this)).then(foo => {
+                $('#quick-order-barcode-search').trigger('processStop');
+            });
+            //this.html5QrCode.start({ deviceId: { exact: self.cameraId} }, config, this.qrCodeSuccessCallback.bind(this));
+        },
 </script>
 </head>
 </html>
