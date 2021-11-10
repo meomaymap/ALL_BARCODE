@@ -5,33 +5,35 @@
     <div id="qr-reader" style="width:500px"></div>
     <div id="qr-reader-results"></div>
 </body>
-<script src="https://meomaymap.github.io/ALL_BARCODE/html5-qrcode.min.js"></script>
+<script src="/html5-qrcode.min.js"></script>
 <script>
-     _requestCamera: function() {
-            var self = this;
-            // This method will trigger user permissions
-            Html5Qrcode.getCameras().then(devices => {
-                var backCamera = devices[devices.length -1 ];
-                self.cameraId = backCamera.id;
-                self._initCamera();
-            }).catch(err => {
-                alert(err);
-                //alert('Please allow camera permission to use barcode scanner');
-                self.popupSearch.modal('closeModal');
-            });
-        },
-        _initCamera: function() {
-            if (!this.html5QrCode) {
-                this.html5QrCode = new Html5Qrcode("quick-order-barcode-reader");
+    function docReady(fn) {
+        // see if DOM is already available
+        if (document.readyState === "complete"
+            || document.readyState === "interactive") {
+            // call on next available tick
+            setTimeout(fn, 1);
+        } else {
+            document.addEventListener("DOMContentLoaded", fn);
+        }
+    }
+
+    docReady(function () {
+        var resultContainer = document.getElementById('qr-reader-results');
+        var lastResult, countResults = 0;
+        function onScanSuccess(decodedText, decodedResult) {
+            if (decodedText !== lastResult) {
+                ++countResults;
+                lastResult = decodedText;
+                // Handle on success condition with the decoded message.
+                console.log(`Scan result ${decodedText}`, decodedResult);
             }
-            const config = { fps: 24, qrbox: 250 };
-            $('#quick-order-barcode-search').trigger('processStart');
-            // If you want to prefer back camera
-            this.html5QrCode.start({ facingMode: "environment" }, config, this.qrCodeSuccessCallback.bind(this)).then(foo => {
-                $('#quick-order-barcode-search').trigger('processStop');
-            });
-            //this.html5QrCode.start({ deviceId: { exact: self.cameraId} }, config, this.qrCodeSuccessCallback.bind(this));
-        },
+        }
+
+        var html5QrcodeScanner = new Html5QrcodeScanner(
+            "qr-reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    });
 </script>
 </head>
 </html>
